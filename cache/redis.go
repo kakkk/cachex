@@ -16,6 +16,9 @@ type RedisCache[T any] struct {
 	ttl    time.Duration
 }
 
+// NewRedisCacheWithClient returns a newly initialize RedisCache implement Cache by client and ttl
+// client: redis client, need github.com/redis/go-redis/v9 *redis.Client
+// ttl: redis expire ttl, if ttl set 0, cache will not expire
 func NewRedisCacheWithClient[T any](client *redis.Client, ttl time.Duration) *RedisCache[T] {
 	return &RedisCache[T]{
 		client: client,
@@ -23,6 +26,9 @@ func NewRedisCacheWithClient[T any](client *redis.Client, ttl time.Duration) *Re
 	}
 }
 
+// NewRedisCacheWithOptions returns a newly initialize RedisCache implement Cache by redis options and ttl
+// options: redis options, need github.com/redis/go-redis/v9 *redis.Options
+// ttl: redis expire ttl, if ttl set 0, cache will not expire
 func NewRedisCacheWithOptions[T any](options *redis.Options, ttl time.Duration) *RedisCache[T] {
 	return &RedisCache[T]{
 		client: redis.NewClient(options),

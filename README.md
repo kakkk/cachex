@@ -6,3 +6,9 @@
 [![GitHub](https://img.shields.io/github/license/kakkk/cachex)](https://github.com/kakkk/cachex/blob/master/LICENSE)
 
 CacheX，一个go多级缓存组件
+
+## 快速开始
+
+```shell
+go get github.com/kakkk/cachex@laltest
+```
