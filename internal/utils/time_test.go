@@ -67,3 +67,11 @@ func TestIsExpired(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRandomTTL(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		got := GetRandomTTL()
+		assert.Less(t, got, 200*time.Millisecond)
+		assert.Greater(t, got, time.Duration(-1))
+	}
+}

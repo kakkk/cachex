@@ -1,6 +1,9 @@
 package utils
 
-import "time"
+import (
+	"math/rand"
+	"time"
+)
 
 func ConvertTimestamp(t time.Time) int64 {
 	return t.UnixMilli()
@@ -17,4 +20,8 @@ func IsExpired(createAt int64, now time.Time, expire time.Duration) bool {
 		return true
 	}
 	return false
+}
+
+func GetRandomTTL() time.Duration {
+	return time.Duration(rand.Int()%200) * time.Millisecond
 }

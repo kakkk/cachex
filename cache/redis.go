@@ -82,7 +82,7 @@ func (rc *RedisCache[T]) Set(ctx context.Context, key string, data T, createTime
 	if err != nil {
 		return fmt.Errorf("marshal error: %v", err)
 	}
-	return rc.client.Set(ctx, key, val, rc.ttl).Err()
+	return rc.client.Set(ctx, key, val, rc.ttl+utils.GetRandomTTL()).Err()
 }
 
 func (rc *RedisCache[T]) MSet(ctx context.Context, kvs map[string]T, createTime time.Time) error {
@@ -93,7 +93,7 @@ func (rc *RedisCache[T]) MSet(ctx context.Context, kvs map[string]T, createTime 
 		if err != nil {
 			return fmt.Errorf("marshal error: %v", err)
 		}
-		pipe.Set(ctx, k, val, rc.ttl)
+		pipe.Set(ctx, k, val, rc.ttl+utils.GetRandomTTL())
 	}
 	_, err := pipe.Exec(ctx)
 	if err != nil {
