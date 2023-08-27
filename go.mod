@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.5
+	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/bytedance/sonic v1.10.0
 	github.com/coocood/freecache v1.2.3
 	github.com/redis/go-redis/v9 v9.0.5
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
-	github.com/allegro/bigcache/v3 v3.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
