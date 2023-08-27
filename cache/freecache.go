@@ -17,7 +17,9 @@ type FreeCache[T any] struct {
 }
 
 // NewFreeCache returns a newly initialize FreeCache implement Cache by size and ttl
+//
 // size: size in bytes, e.g. 100*1024*1024 is 100 MB
+//
 // ttl: cache expire ttl, if ttl set 0, cache will not expire
 func NewFreeCache[T any](size int, ttl time.Duration) *FreeCache[T] {
 	return &FreeCache[T]{
