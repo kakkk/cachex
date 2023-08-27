@@ -13,14 +13,14 @@ import (
 
 func TestNewFreeCache(t *testing.T) {
 	ttl := 30 * time.Minute
-	fc := NewFreeCache[string](10*1024*1024, ttl)
+	fc := NewFreeCache[string](1024*1024, ttl)
 	assert.Equal(t, ttl, fc.ttl)
 	assert.NotNil(t, fc.cache)
 }
 
 func TestFreeCache_Get(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	expire := 20 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
@@ -62,7 +62,7 @@ func TestFreeCache_Get(t *testing.T) {
 
 func TestFreeCache_MGet(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	expire := 20 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
@@ -84,7 +84,7 @@ func TestFreeCache_MGet(t *testing.T) {
 
 func TestFreeCache_Set(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
 
@@ -116,7 +116,7 @@ func TestFreeCache_Set(t *testing.T) {
 
 func TestFreeCache_MSet(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
 
@@ -155,7 +155,7 @@ func TestFreeCache_MSet(t *testing.T) {
 
 func TestFreeCache_Delete(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
 
@@ -170,7 +170,7 @@ func TestFreeCache_Delete(t *testing.T) {
 
 func TestFreeCache_MDelete(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
 
@@ -195,7 +195,7 @@ func TestFreeCache_MDelete(t *testing.T) {
 
 func TestFreeCache_Ping(t *testing.T) {
 	ctx := context.Background()
-	c := freecache.NewCache(10 * 1024 * 1024)
+	c := freecache.NewCache(1024 * 1024)
 	ttl := 30 * time.Minute
 	fc := &FreeCache[string]{cache: c, ttl: ttl}
 	pong, err := fc.Ping(ctx)
