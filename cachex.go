@@ -227,7 +227,7 @@ func (cx *CacheX[K, V]) getRealDataInternal(ctx context.Context, key K) (data V,
 					break
 				}
 			}
-			cx.downgradeCallback(ctx, key, err)
+			cx.downgrade(ctx, key, err)
 			return
 		}
 	})()
