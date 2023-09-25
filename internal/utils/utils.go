@@ -68,3 +68,10 @@ func MarshalData[T any](data T, createAt int64) ([]byte, error) {
 	}
 	return json.Marshal(cacheData)
 }
+
+func NewData[T any](data T, createAt int64) *model.CacheData[T] {
+	return &model.CacheData[T]{
+		CreateAt: createAt,
+		Data:     data,
+	}
+}

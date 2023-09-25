@@ -214,3 +214,10 @@ func TestMarshalData(t *testing.T) {
 		assert.Nil(tt, got)
 	})
 }
+
+func TestNewData(t *testing.T) {
+	got := NewData[string]("test", 1017072000000)
+	assert.NotNil(t, got)
+	assert.Equal(t, got.Data, "test")
+	assert.Equal(t, got.CreateAt, int64(1017072000000))
+}

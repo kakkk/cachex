@@ -7,6 +7,7 @@ require (
 	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/bytedance/sonic v1.10.0
 	github.com/coocood/freecache v1.2.3
+	github.com/hashicorp/golang-lru/v2 v2.0.6
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/stretchr/testify v1.8.4
 )
