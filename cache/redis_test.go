@@ -73,6 +73,16 @@ func TestRedisCache_Get(t *testing.T) {
 		assert.False(tt, mr.Exists("expired"))
 	})
 
+	t.Run("data_default", func(tt *testing.T) {
+		val := utils.NewDefaultDataWithMarshal[string](time.Now().UnixMilli())
+		_ = mr.Set("data_default", string(val))
+		got, ok := rc.Get(ctx, "data_default", expire)
+		assert.False(tt, ok)
+		assert.Equal(tt, "", got)
+		assert.True(tt, mr.Exists("data_default"))
+
+	})
+
 	t.Run("data_nil", func(tt *testing.T) {
 		got, ok := rc.Get(ctx, "data_nil", expire)
 		assert.False(tt, ok)
@@ -208,6 +218,24 @@ func TestRedisCache_MGet(t *testing.T) {
 		assert.EqualValues(tt, want, got)
 
 	})
+
+	t.Run("some_default", func(tt *testing.T) {
+		data := map[string]string{
+			"some_default_1": "some_default_1",
+			"some_default_2": "some_default_2",
+		}
+		for k, v := range data {
+			val, _ := utils.MarshalData(v, time.Now().UnixMilli())
+			_ = mr.Set(k, string(val))
+		}
+		defaultVal := utils.NewDefaultDataWithMarshal[string](time.Now().UnixMilli())
+		_ = mr.Set("some_default_3", string(defaultVal))
+		keys := []string{"some_default_1", "some_default_2", "some_default_3"}
+		got := rc.MGet(ctx, keys, expire)
+		assert.EqualValues(tt, data, got)
+		assert.True(tt, mr.Exists("some_default_3"))
+
+	})
 }
 
 func TestRedisCache_Set(t *testing.T) {
@@ -290,6 +318,38 @@ func TestRedisCache_MSet(t *testing.T) {
 		err := rc2.MSet(ctx, kvs, time.Now())
 		assert.NotNil(tt, err)
 	})
+}
+
+func TestRedisCache_SetDefault(t *testing.T) {
+	ctx := context.Background()
+	mr := miniredis.RunT(t)
+	ttl := 30 * time.Minute
+	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	rc := &RedisCache[string]{client: client, ttl: ttl}
+	now := time.Now()
+
+	t.Run("success", func(tt *testing.T) {
+		err := rc.SetDefault(ctx, []string{"default_1", "default_2", "default_3"}, now)
+		assert.Nil(tt, err)
+		want := utils.NewDefaultDataWithMarshal[string](utils.ConvertTimestamp(now))
+		got, err := mr.Get("default_1")
+		assert.Nil(tt, err)
+		assert.JSONEq(tt, string(want), got)
+		got, err = mr.Get("default_2")
+		assert.Nil(tt, err)
+		assert.JSONEq(tt, string(want), got)
+		got, err = mr.Get("default_3")
+		assert.Nil(tt, err)
+		assert.JSONEq(tt, string(want), got)
+	})
+
+	t.Run("redis error", func(tt *testing.T) {
+		mr.SetError("unit_test")
+		defer mr.SetError("")
+		err := rc.SetDefault(ctx, []string{"default_1", "default_2", "default_3"}, now)
+		assert.NotNil(tt, err)
+	})
+
 }
 
 func TestRedisCache_Delete(t *testing.T) {

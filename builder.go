@@ -94,6 +94,11 @@ func (b *Builder[K, V]) SetMDowngradeCallBack(cb MDowngradeCallBack[K]) *Builder
 	return b
 }
 
+func (b *Builder[K, V]) SetIsSetDefault(isSetDefault bool) *Builder[K, V] {
+	b.cx.isSetDefault = isSetDefault
+	return b
+}
+
 // Build 设置并初始化缓存
 func (b *Builder[K, V]) Build() (*CacheX[K, V], error) {
 	// 设置logger

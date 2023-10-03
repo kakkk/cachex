@@ -184,7 +184,7 @@ func TestConvertCacheDataMap(t *testing.T) {
 
 func TestUnmarshalData(t *testing.T) {
 	t.Run("success", func(tt *testing.T) {
-		str := `{"c":1017072000000,"d":"test"}`
+		str := `{"c":1017072000000,"d":"test","z":0}`
 		want := &model.CacheData[string]{
 			CreateAt: 1017072000000,
 			Data:     "test",
@@ -205,7 +205,7 @@ func TestMarshalData(t *testing.T) {
 	t.Run("success", func(tt *testing.T) {
 		got, err := MarshalData("test", 1017072000000)
 		assert.Nil(tt, err)
-		assert.JSONEq(tt, `{"c":1017072000000,"d":"test"}`, string(got))
+		assert.JSONEq(tt, `{"c":1017072000000,"d":"test","z":0}`, string(got))
 	})
 	t.Run("marshal error", func(tt *testing.T) {
 		var ch chan string
@@ -220,4 +220,18 @@ func TestNewData(t *testing.T) {
 	assert.NotNil(t, got)
 	assert.Equal(t, got.Data, "test")
 	assert.Equal(t, got.CreateAt, int64(1017072000000))
+}
+
+func TestNewDefaultDataWithMarshal(t *testing.T) {
+	got := NewDefaultDataWithMarshal[string](1017072000000)
+	assert.JSONEq(t, `{"c":1017072000000,"d":"","z":1}`, string(got))
+}
+
+func TestNewDefaultData(t *testing.T) {
+	want := &model.CacheData[string]{
+		CreateAt: 1017072000000,
+		Default:  1,
+	}
+	got := NewDefaultData[string](1017072000000)
+	assert.EqualValues(t, want, got)
 }

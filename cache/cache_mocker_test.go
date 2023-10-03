@@ -22,6 +22,8 @@ func TestCacheMocker(t *testing.T) {
 		assert.Nil(tt, err)
 		err = mocker.MSet(ctx, map[string]string{"k_1": "v_1", "k_2": "v_3"}, time.Now())
 		assert.Nil(tt, err)
+		err = mocker.SetDefault(ctx, []string{"k_1", "k_2"}, time.Now())
+		assert.Nil(tt, err)
 		err = mocker.Delete(ctx, "k")
 		assert.Nil(tt, err)
 		err = mocker.MDelete(ctx, []string{"k_1", "k_2"})
@@ -45,6 +47,9 @@ func TestCacheMocker(t *testing.T) {
 			MockMSet(func(ctx context.Context, kvs map[string]string, createTime time.Time) error {
 				return testErr
 			}).
+			MockSetDefault(func(ctx context.Context, keys []string, createTime time.Time) error {
+				return testErr
+			}).
 			MockDelete(func(ctx context.Context, key string) error {
 				return testErr
 			}).
@@ -62,6 +67,8 @@ func TestCacheMocker(t *testing.T) {
 		err := mocker.Set(ctx, "k", "v", time.Now())
 		assert.ErrorIs(tt, err, testErr)
 		err = mocker.MSet(ctx, map[string]string{"k_1": "v_1", "k_2": "v_3"}, time.Now())
+		assert.ErrorIs(tt, err, testErr)
+		err = mocker.SetDefault(ctx, []string{"k_1", "k_2"}, time.Now())
 		assert.ErrorIs(tt, err, testErr)
 		err = mocker.Delete(ctx, "k")
 		assert.ErrorIs(tt, err, testErr)

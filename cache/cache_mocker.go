@@ -6,13 +6,14 @@ import (
 )
 
 type Mocker[T any] struct {
-	mockGet     func(ctx context.Context, key string, expire time.Duration) (T, bool)
-	mockMGet    func(ctx context.Context, keys []string, expire time.Duration) map[string]T
-	mockSet     func(ctx context.Context, key string, data T, createTime time.Time) error
-	mockMSet    func(ctx context.Context, kvs map[string]T, createTime time.Time) error
-	mockDelete  func(ctx context.Context, key string) error
-	mockMDelete func(ctx context.Context, keys []string) error
-	mockPing    func(ctx context.Context) (string, error)
+	mockGet        func(ctx context.Context, key string, expire time.Duration) (T, bool)
+	mockMGet       func(ctx context.Context, keys []string, expire time.Duration) map[string]T
+	mockSet        func(ctx context.Context, key string, data T, createTime time.Time) error
+	mockMSet       func(ctx context.Context, kvs map[string]T, createTime time.Time) error
+	mockSetDefault func(ctx context.Context, keys []string, createTime time.Time) error
+	mockDelete     func(ctx context.Context, key string) error
+	mockMDelete    func(ctx context.Context, keys []string) error
+	mockPing       func(ctx context.Context) (string, error)
 }
 
 func NewCacheMocker[T any]() *Mocker[T] {
@@ -44,6 +45,13 @@ func (m *Mocker[T]) Set(ctx context.Context, key string, data T, createTime time
 func (m *Mocker[T]) MSet(ctx context.Context, kvs map[string]T, createTime time.Time) error {
 	if m.mockMSet != nil {
 		return m.mockMSet(ctx, kvs, createTime)
+	}
+	return nil
+}
+
+func (m *Mocker[T]) SetDefault(ctx context.Context, keys []string, createTime time.Time) error {
+	if m.mockSetDefault != nil {
+		return m.mockSetDefault(ctx, keys, createTime)
 	}
 	return nil
 }
@@ -86,6 +94,11 @@ func (m *Mocker[T]) MockSet(mockFn func(ctx context.Context, key string, data T,
 
 func (m *Mocker[T]) MockMSet(mockFn func(ctx context.Context, kvs map[string]T, createTime time.Time) error) *Mocker[T] {
 	m.mockMSet = mockFn
+	return m
+}
+
+func (m *Mocker[T]) MockSetDefault(mockFn func(ctx context.Context, keys []string, createTime time.Time) error) *Mocker[T] {
+	m.mockSetDefault = mockFn
 	return m
 }
 

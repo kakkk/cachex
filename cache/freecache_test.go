@@ -45,6 +45,14 @@ func TestFreeCache_Get(t *testing.T) {
 		assert.Equal(tt, "expired", got)
 	})
 
+	t.Run("data_default", func(tt *testing.T) {
+		val := utils.NewDefaultDataWithMarshal[string](time.Now().UnixMilli())
+		_ = c.Set([]byte("data_default"), val, 0)
+		got, ok := fc.Get(ctx, "data_default", expire)
+		assert.False(tt, ok)
+		assert.Equal(tt, "", got)
+	})
+
 	t.Run("data_nil", func(tt *testing.T) {
 		got, ok := fc.Get(ctx, "data_nil", expire)
 		assert.False(tt, ok)
@@ -151,6 +159,24 @@ func TestFreeCache_MSet(t *testing.T) {
 			assert.ErrorIs(tt, err, freecache.ErrNotFound)
 		}
 	})
+}
+
+func TestFreeCache_MSetDefault(t *testing.T) {
+	ctx := context.Background()
+	c := freecache.NewCache(1024 * 1024)
+	ttl := 30 * time.Minute
+	fc := &FreeCache[string]{cache: c, ttl: ttl}
+
+	now := time.Now()
+	err := fc.SetDefault(ctx, []string{"default_1", "default_2"}, now)
+	assert.Nil(t, err)
+	want := utils.NewDefaultDataWithMarshal[string](utils.ConvertTimestamp(now))
+	got, err := c.Get([]byte("default_1"))
+	assert.Nil(t, err)
+	assert.JSONEq(t, string(want), string(got))
+	got, err = c.Get([]byte("default_2"))
+	assert.Nil(t, err)
+	assert.JSONEq(t, string(want), string(got))
 }
 
 func TestFreeCache_Delete(t *testing.T) {

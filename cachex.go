@@ -48,6 +48,7 @@ type CacheX[K comparable, V any] struct {
 	downgradeCacheExpireTime time.Duration         // 降级最大业务过期时间
 	downgradeCallback        DowngradeCallBack[K]  // 降级回调
 	mDowngradeCallback       MDowngradeCallBack[K] // 批量降级回调
+	isSetDefault             bool                  // 设置控制
 }
 
 // Set 设置缓存
@@ -208,11 +209,17 @@ func (cx *CacheX[K, V]) getRealDataInternal(ctx context.Context, key K) (data V,
 		err  error
 		zero V
 	)
-	// 回源失败降级策略
+	// 回源失败降级策略&设置空值策略
 	defer cx.recover(ctx, func(r any) {
 		if r != nil {
 			err = fmt.Errorf("[panic recover] %v", r)
 		}
+		defer func() {
+			// 未查询到且需要设置空值
+			if !ok && cx.isSetDefault {
+				cx.setDefault(ctx, []string{cx.getDataKey(key)})
+			}
+		}()
 		if err != nil && !errors.Is(err, ErrNotFound) {
 			data = zero
 			ok = false
@@ -255,6 +262,18 @@ func (cx *CacheX[K, V]) mGetRealDataInternal(ctx context.Context, keys []K) (dat
 		if r != nil {
 			err = fmt.Errorf("[panic recover] %v", r)
 		}
+		defer func() {
+			if cx.isSetDefault {
+				var defaultKeys []K
+				// 检查需要设置空值的key
+				for _, key := range keys {
+					if _, ok := data[key]; !ok {
+						defaultKeys = append(defaultKeys, key)
+					}
+				}
+				cx.setDefault(ctx, cx.mGetDataKeys(defaultKeys))
+			}
+		}()
 		if err != nil && !errors.Is(err, ErrNotFound) {
 			data = make(map[K]V)
 			// 不允许降级
@@ -342,6 +361,25 @@ func (cx *CacheX[K, V]) mDowngrade(ctx context.Context, keys []K, err error) {
 		return
 	}
 	cx.logger.Warnf(ctx, "cache downgrade, keys:%v, error:%v", keys, err)
+}
+
+func (cx *CacheX[K, V]) setDefault(ctx context.Context, keys []string) {
+	defer cx.recover(ctx, nil)()
+	if keys == nil || len(keys) == 0 {
+		return
+	}
+	setErrors := cachexError.NewCacheSetError()
+	now := time.Now()
+	for level := 0; level < len(cx.caches); level++ {
+		err := cx.caches[level].SetDefault(ctx, keys, now)
+		if err != nil {
+			setErrors = setErrors.AppendError(level, err)
+		}
+	}
+	if setErrors != nil {
+		cx.logger.Warnf(ctx, "set default data error: %v", setErrors)
+	}
+	return
 }
 
 // recover Panic Recover

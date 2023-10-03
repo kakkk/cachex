@@ -75,3 +75,19 @@ func NewData[T any](data T, createAt int64) *model.CacheData[T] {
 		Data:     data,
 	}
 }
+
+func NewDefaultDataWithMarshal[T any](createAt int64) []byte {
+	data := &model.CacheData[T]{
+		CreateAt: createAt,
+		Default:  1,
+	}
+	bytes, _ := json.Marshal(data)
+	return bytes
+}
+
+func NewDefaultData[T any](createAt int64) *model.CacheData[T] {
+	return &model.CacheData[T]{
+		CreateAt: createAt,
+		Default:  1,
+	}
+}

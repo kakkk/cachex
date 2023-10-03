@@ -31,6 +31,9 @@ func (lc *LRUCache[T]) Get(_ context.Context, key string, expire time.Duration) 
 	if utils.IsExpired(data.CreateAt, time.Now(), expire) {
 		return zero, false
 	}
+	if data.IsDefault() {
+		return zero, false
+	}
 	return data.Data, true
 }
 
@@ -56,6 +59,14 @@ func (lc *LRUCache[T]) Set(_ context.Context, key string, data T, createTime tim
 func (lc *LRUCache[T]) MSet(ctx context.Context, kvs map[string]T, createTime time.Time) error {
 	for k, v := range kvs {
 		_ = lc.Set(ctx, k, v, createTime)
+	}
+	return nil
+}
+
+func (lc *LRUCache[T]) SetDefault(ctx context.Context, keys []string, createTime time.Time) error {
+	val := utils.NewDefaultData[T](utils.ConvertTimestamp(createTime))
+	for _, key := range keys {
+		lc.cache.Add(key, val)
 	}
 	return nil
 }

@@ -41,6 +41,7 @@ func TestBuilder(t *testing.T) {
 			SetDowngradeCacheExpireTime(downgradeExpireTime).
 			SetDowngradeCallBack(downgradeCallBack).
 			SetMDowngradeCallBack(mDowngradeCallBack).
+			SetIsSetDefault(true).
 			Build()
 
 		assert.Nil(t, err)
@@ -56,6 +57,7 @@ func TestBuilder(t *testing.T) {
 		assert.Equal(tt, downgradeExpireTime, cx.downgradeCacheExpireTime)
 		assert.NotNil(tt, cx.downgradeCallback)
 		assert.NotNil(tt, cx.mDowngradeCallback)
+		assert.True(tt, cx.isSetDefault)
 	})
 
 	t.Run("not_set_logger", func(tt *testing.T) {

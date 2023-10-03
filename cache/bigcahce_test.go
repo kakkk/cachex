@@ -61,6 +61,14 @@ func TestBigCache_Get(t *testing.T) {
 		assert.Equal(tt, "expired", got)
 	})
 
+	t.Run("data_default", func(tt *testing.T) {
+		val := utils.NewDefaultDataWithMarshal[string](time.Now().UnixMilli())
+		_ = c.Set("data_default", val)
+		got, ok := bc.Get(ctx, "data_default", expire)
+		assert.False(tt, ok)
+		assert.Equal(tt, "", got)
+	})
+
 	t.Run("data_nil", func(tt *testing.T) {
 		got, ok := bc.Get(ctx, "data_nil", expire)
 		assert.False(tt, ok)
@@ -172,6 +180,25 @@ func TestBigCache_MSet(t *testing.T) {
 			assert.ErrorIs(tt, err, bigcache.ErrEntryNotFound)
 		}
 	})
+}
+
+func TestBigCache_SetDefault(t *testing.T) {
+	ctx := context.Background()
+	ttl := 30 * time.Minute
+	c, _ := bigcache.New(ctx, bigcache.DefaultConfig(ttl))
+	bc := &BigCache[string]{cache: c}
+
+	now := time.Now()
+	err := bc.SetDefault(ctx, []string{"default_1", "default_2"}, now)
+	assert.Nil(t, err)
+	want := utils.NewDefaultDataWithMarshal[string](utils.ConvertTimestamp(now))
+	got, err := c.Get("default_1")
+	assert.Nil(t, err)
+	assert.JSONEq(t, string(want), string(got))
+	got, err = c.Get("default_2")
+	assert.Nil(t, err)
+	assert.JSONEq(t, string(want), string(got))
+
 }
 
 func TestBigCache_Delete(t *testing.T) {

@@ -47,6 +47,14 @@ func TestLRUCache_Get(t *testing.T) {
 		assert.Equal(tt, "expired", got)
 	})
 
+	t.Run("data_default", func(tt *testing.T) {
+		val := utils.NewDefaultData[string](time.Now().UnixMilli())
+		_ = c.Add("data_default", val)
+		got, ok := lc.Get(ctx, "data_default", expire)
+		assert.False(tt, ok)
+		assert.Equal(tt, "", got)
+	})
+
 	t.Run("data_nil", func(tt *testing.T) {
 		got, ok := lc.Get(ctx, "data_nil", expire)
 		assert.False(tt, ok)
@@ -113,6 +121,23 @@ func TestLRUCache_MSet(t *testing.T) {
 		val, _ := c.Get(k)
 		assert.EqualValues(t, want, val)
 	}
+}
+
+func TestLRUCache_SetDefault(t *testing.T) {
+	ttl := time.Minute * 30
+	size := 10
+	ctx := context.Background()
+	c := expirable.NewLRU[string, *model.CacheData[string]](size, nil, ttl)
+	lc := &LRUCache[string]{cache: c}
+
+	now := time.Now()
+	err := lc.SetDefault(ctx, []string{"default_1", "default_2"}, now)
+	assert.Nil(t, err)
+	want := utils.NewDefaultData[string](utils.ConvertTimestamp(now))
+	got, _ := c.Get("default_1")
+	assert.EqualValues(t, want, got)
+	got, _ = c.Get("default_2")
+	assert.EqualValues(t, want, got)
 }
 
 func TestLRUCache_Delete(t *testing.T) {

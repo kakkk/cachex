@@ -807,6 +807,34 @@ func TestCacheX_getRealDataInternal(t *testing.T) {
 		assert.False(tt, ok)
 		assert.Equal(tt, "", got)
 	})
+	t.Run("downgrade but data not found, set default", func(tt *testing.T) {
+		cache0 := cache.NewCacheMocker[string]().
+			MockGet(func(ctx context.Context, key string, expire time.Duration) (string, bool) {
+				assert.Equal(tt, "k", key)
+				return "", false
+			}).MockSetDefault(func(ctx context.Context, keys []string, createTime time.Time) error {
+			assert.EqualValues(tt, []string{"k"}, keys)
+			return nil
+		})
+		testErr := errors.New("test")
+		cx := &CacheX[string, string]{
+			getDataKey: func(key string) string { return key },
+			caches:     []cache.Cache[string]{cache0},
+			getRealData: func(ctx context.Context, key string) (data string, err error) {
+				return "", testErr
+			},
+			allowDowngrade:           true,
+			downgradeCacheExpireTime: time.Hour,
+			isSetDefault:             true,
+			downgradeCallback: func(ctx context.Context, key string, err error) {
+				assert.Equal(tt, "k", key)
+				assert.ErrorIs(tt, err, testErr)
+			},
+		}
+		got, ok := cx.getRealDataInternal(ctx, "k")
+		assert.False(tt, ok)
+		assert.Equal(tt, "", got)
+	})
 }
 
 func TestCacheX_mGetRealDataInternal(t *testing.T) {
@@ -867,6 +895,30 @@ func TestCacheX_mGetRealDataInternal(t *testing.T) {
 		}
 		got := cx.mGetRealDataInternal(ctx, keys)
 		assert.Empty(tt, got)
+	})
+
+	t.Run("allow downgrade/got some data/set default", func(tt *testing.T) {
+		data := map[string]string{
+			"k_1": "v_1",
+			"k_2": "v_2",
+		}
+		cache0 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, keys []string, createTime time.Time) error {
+				assert.EqualValues(tt, []string{"k_3"}, keys)
+				return nil
+			})
+		cx := &CacheX[string, string]{
+			getDataKey: func(key string) string { return key },
+			caches:     []cache.Cache[string]{cache0},
+			mGetRealData: func(ctx context.Context, k []string) (map[string]string, error) {
+				assert.EqualValues(tt, keys, k)
+				return data, nil
+			},
+			allowDowngrade: true,
+			isSetDefault:   true,
+		}
+		got := cx.mGetRealDataInternal(ctx, keys)
+		assert.EqualValues(tt, data, got)
 	})
 
 	t.Run("downgrade got data", func(tt *testing.T) {
@@ -1014,4 +1066,62 @@ func TestCacheX_mDowngrade(t *testing.T) {
 		assert.EqualValues(t, k, keys)
 		assert.ErrorIs(t, err, testErr)
 	}
+}
+
+func TestCacheX_setDefault(t *testing.T) {
+	keys := []string{"key_1", "key_2", "key_3"}
+	ctx := context.Background()
+	t.Run("normal", func(tt *testing.T) {
+		cache0 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, k []string, createTime time.Time) error {
+				assert.EqualValues(tt, keys, k)
+				return nil
+			})
+		cache1 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, k []string, createTime time.Time) error {
+				assert.EqualValues(tt, keys, k)
+				return nil
+			})
+		cx := &CacheX[string, string]{
+			getDataKey: func(key string) string { return key },
+			caches:     []cache.Cache[string]{cache0, cache1},
+		}
+		cx.setDefault(ctx, keys)
+	})
+	t.Run("keys length is 0", func(tt *testing.T) {
+		cache0 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, k []string, createTime time.Time) error {
+				assert.EqualValues(tt, keys, k)
+				return errors.New("test error")
+			})
+		cache1 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, k []string, createTime time.Time) error {
+				assert.EqualValues(tt, keys, k)
+				return errors.New("test error")
+			})
+		cx := &CacheX[string, string]{
+			getDataKey: func(key string) string { return key },
+			caches:     []cache.Cache[string]{cache0, cache1},
+		}
+		cx.setDefault(ctx, nil)
+		cx.setDefault(ctx, []string{})
+	})
+	t.Run("set error", func(tt *testing.T) {
+		cache0 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, k []string, createTime time.Time) error {
+				assert.EqualValues(tt, keys, k)
+				return errors.New("test error")
+			})
+		cache1 := cache.NewCacheMocker[string]().
+			MockSetDefault(func(ctx context.Context, k []string, createTime time.Time) error {
+				assert.EqualValues(tt, keys, k)
+				return errors.New("test error")
+			})
+		cx := &CacheX[string, string]{
+			logger:     logger.NewDefaultLogger(),
+			getDataKey: func(key string) string { return key },
+			caches:     []cache.Cache[string]{cache0, cache1},
+		}
+		cx.setDefault(ctx, keys)
+	})
 }

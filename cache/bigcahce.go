@@ -50,6 +50,9 @@ func (bc *BigCache[T]) Get(_ context.Context, key string, expire time.Duration) 
 	if utils.IsExpired(data.CreateAt, time.Now(), expire) {
 		return zero, false
 	}
+	if data.IsDefault() {
+		return zero, false
+	}
 	return data.Data, true
 }
 
@@ -83,6 +86,21 @@ func (bc *BigCache[T]) MSet(ctx context.Context, kvs map[string]T, createTime ti
 			return err
 		}
 		success = append(success, k)
+	}
+	return nil
+}
+
+func (bc *BigCache[T]) SetDefault(_ context.Context, keys []string, createTime time.Time) error {
+	var errs []error
+	val := utils.NewDefaultDataWithMarshal[T](utils.ConvertTimestamp(createTime))
+	for _, key := range keys {
+		err := bc.cache.Set(key, val)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 	return nil
 }

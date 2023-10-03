@@ -17,6 +17,7 @@ type RedisCache[T any] struct {
 }
 
 // NewRedisCacheWithClient returns a newly initialize RedisCache implement Cache by client and ttl
+//
 // client: redis client, need github.com/redis/go-redis/v9 *redis.Client
 // ttl: redis expire ttl, if ttl set 0, cache will not expire
 func NewRedisCacheWithClient[T any](client *redis.Client, ttl time.Duration) *RedisCache[T] {
@@ -27,6 +28,7 @@ func NewRedisCacheWithClient[T any](client *redis.Client, ttl time.Duration) *Re
 }
 
 // NewRedisCacheWithOptions returns a newly initialize RedisCache implement Cache by redis options and ttl
+//
 // options: redis options, need github.com/redis/go-redis/v9 *redis.Options
 // ttl: redis expire ttl, if ttl set 0, cache will not expire
 func NewRedisCacheWithOptions[T any](options *redis.Options, ttl time.Duration) *RedisCache[T] {
@@ -49,6 +51,9 @@ func (rc *RedisCache[T]) Get(ctx context.Context, key string, expire time.Durati
 	if utils.IsExpired(data.CreateAt, time.Now(), expire) {
 		return zero, false
 	}
+	if data.IsDefault() {
+		return zero, false
+	}
 	return data.Data, true
 }
 
@@ -69,6 +74,9 @@ func (rc *RedisCache[T]) MGet(ctx context.Context, keys []string, expire time.Du
 			continue
 		}
 		if utils.IsExpired(data.CreateAt, now, expire) {
+			continue
+		}
+		if data.IsDefault() {
 			continue
 		}
 		result[key] = data.Data
@@ -94,6 +102,19 @@ func (rc *RedisCache[T]) MSet(ctx context.Context, kvs map[string]T, createTime 
 			return fmt.Errorf("marshal error: %v", err)
 		}
 		pipe.Set(ctx, k, val, rc.ttl+utils.GetRandomTTL())
+	}
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (rc *RedisCache[T]) SetDefault(ctx context.Context, keys []string, createTime time.Time) error {
+	pipe := rc.client.Pipeline()
+	val := utils.NewDefaultDataWithMarshal[T](utils.ConvertTimestamp(createTime))
+	for _, key := range keys {
+		pipe.Set(ctx, key, val, rc.ttl+utils.GetRandomTTL())
 	}
 	_, err := pipe.Exec(ctx)
 	if err != nil {
