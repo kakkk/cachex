@@ -2,7 +2,6 @@ package cachex
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -74,19 +73,6 @@ func TestBuilder(t *testing.T) {
 		_, err := NewBuilder[string, string](context.Background()).
 			SetName(name).
 			AddCache(cache0).
-			Build()
-		assert.NotNil(tt, err)
-	})
-
-	t.Run("cache_access_fail", func(tt *testing.T) {
-		cacheNotAccess := cache.NewCacheMocker[string]().
-			MockPing(func(_ context.Context) (string, error) {
-				return "", errors.New("unit_test")
-			})
-		_, err := NewBuilder[string, string](context.Background()).
-			SetName(name).
-			AddCache(cacheNotAccess).
-			SetGetDataKey(getDataKey).
 			Build()
 		assert.NotNil(tt, err)
 	})

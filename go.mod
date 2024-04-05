@@ -1,6 +1,6 @@
 module github.com/kakkk/cachex
 
-go 1.21
+go 1.21.1
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.5

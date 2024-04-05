@@ -110,15 +110,6 @@ func (b *Builder[K, V]) Build() (*CacheX[K, V], error) {
 		b.cx.logger.Errorf(b.ctx, "GetDataKey not set")
 		return nil, fmt.Errorf("GetDataKey not set")
 	}
-	// cache可用性检测
-	for level := 0; level < len(b.cx.caches); level++ {
-		pong, err := b.cx.caches[level].Ping(b.ctx)
-		if err != nil {
-			b.cx.logger.Errorf(b.ctx, "cache %v level %v cache access fail: [%v]", b.cx.name, level, err)
-			return nil, fmt.Errorf("cache access fail: [%w]", err)
-		}
-		b.cx.logger.Debugf(b.ctx, "cache %v level %v cache access, ping: %v", b.cx.name, level, pong)
-	}
 	// 初始化成功
 	b.cx.logger.Debugf(b.ctx, "cache %v check success", b.cx.name)
 	return b.cx, nil

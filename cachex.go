@@ -203,6 +203,20 @@ func (cx *CacheX[K, V]) MDelete(ctx context.Context, keys []K) (err error) {
 	return delErrors
 }
 
+func (cx *CacheX[K, V]) Ping(ctx context.Context) ([]string, error) {
+	pongs := make([]string, len(cx.caches))
+	for level := 0; level < len(cx.caches); level++ {
+		pong, err := cx.caches[level].Ping(ctx)
+		if err != nil {
+			cx.logger.Errorf(ctx, "cache %v level %v cache access fail: [%v]", cx.name, level, err)
+			return nil, fmt.Errorf("cache %v level %v cache access fail: [%v]", cx.name, level, err)
+		}
+		pongs[level] = pong
+		cx.logger.Debugf(ctx, "cache %v level %v cache access, ping: %v", cx.name, level, pong)
+	}
+	return pongs, nil
+}
+
 // getRealDataInternal 回源
 func (cx *CacheX[K, V]) getRealDataInternal(ctx context.Context, key K) (data V, ok bool) {
 	var (

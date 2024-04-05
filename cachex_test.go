@@ -1125,3 +1125,24 @@ func TestCacheX_setDefault(t *testing.T) {
 		cx.setDefault(ctx, keys)
 	})
 }
+
+func TestCacheX_Ping(t *testing.T) {
+	cx := &CacheX[string, string]{
+		logger:     logger.NewDefaultLogger(),
+		getDataKey: func(key string) string { return key },
+		caches: []cache.Cache[string]{cache.NewCacheMocker[string]().MockPing(func(ctx context.Context) (string, error) {
+			return "", errors.New("test error")
+		})},
+	}
+	got, err := cx.Ping(context.Background())
+	assert.NotNil(t, err)
+	assert.Nil(t, got)
+	cx = &CacheX[string, string]{
+		logger:     logger.NewDefaultLogger(),
+		getDataKey: func(key string) string { return key },
+		caches:     []cache.Cache[string]{cache.NewCacheMocker[string]()},
+	}
+	got, err = cx.Ping(context.Background())
+	assert.Nil(t, err)
+	assert.NotNil(t, got)
+}
